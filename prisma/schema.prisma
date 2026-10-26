@@ -1,0 +1,66 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRESQL_CONNECTION")
+}
+
+model Session {
+  id            String    @id
+  shop          String
+  state         String
+  isOnline      Boolean   @default(false)
+  scope         String?
+  expires       DateTime?
+  accessToken   String
+  userId        BigInt?
+  firstName     String?
+  lastName      String?
+  email         String?
+  accountOwner  Boolean   @default(false)
+  locale        String?
+  collaborator  Boolean?  @default(false)
+  emailVerified Boolean?  @default(false)
+  refreshToken         String?
+  refreshTokenExpires DateTime?
+}
+
+model Shop {
+  id            String       @id @default(uuid())
+  shopDomain    String       @unique
+  accessToken   String
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  sizeGuides    SizeGuide[]
+  settings      ShopSetting?
+}
+
+model ShopSetting {
+  id              String   @id @default(uuid())
+  shopId          String   @unique
+  shop            Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  defaultUnit     String   @default("cm") // "cm" or "inches"
+  buttonStyle     String   @default("link") // "link", "button", "pill"
+  primaryColor    String   @default("#121212")
+  textColor       String   @default("#333333")
+  updatedAt       DateTime @updatedAt
+}
+
+model SizeGuide {
+  id          String        @id @default(uuid())
+  shopId      String
+  shop        Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  title       String
+  status      Boolean       @default(true)
+  targetType  String        // "GLOBAL", "COLLECTION", "PRODUCT", "TAG"
+  targetIds   String[]      // Array of Shopify Collection IDs, Product IDs, or Tags
+  tableData   Json          // Structured JSON storing headers, rows, units, and footnotes
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([shopId])
+}
